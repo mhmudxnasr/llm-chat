@@ -27,8 +27,7 @@ import {
   loadStoredConversations,
 } from './lib/chat'
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim()
-const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null
+const ENV_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() ?? ''
 
 function cn(...parts) {
   return parts.filter(Boolean).join(' ')
@@ -47,9 +46,14 @@ function App() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [copiedMessageId, setCopiedMessageId] = useState('')
-  const [statusMessage, setStatusMessage] = useState(
-    API_KEY ? '' : 'Add your Gemini API key to .env to start chatting.',
-  )
+  const [apiKeyInput, setApiKeyInput] = useState(() => {
+    if (typeof window === 'undefined') {
+      return ENV_API_KEY
+    }
+
+    return window.localStorage.getItem(STORAGE_KEYS.apiKey) ?? ENV_API_KEY
+  })
+  const [statusMessage, setStatusMessage] = useState('')
 
   const composerRef = useRef(null)
   const messagesEndRef = useRef(null)
@@ -64,6 +68,7 @@ function App() {
   const draftTokenEstimate = estimateTokens(deferredDraft)
   const lastUsage = getUsageSummary(activeConversation?.tokenUsage)
   const lastMessageContent = activeConversation?.messages.at(-1)?.content ?? ''
+  const currentApiKey = apiKeyInput.trim()
 
   function replaceConversation(conversationId, updater) {
     setConversations((currentConversations) => {
@@ -146,6 +151,18 @@ function App() {
     isStreaming,
   ])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (currentApiKey) {
+      window.localStorage.setItem(STORAGE_KEYS.apiKey, currentApiKey)
+    } else {
+      window.localStorage.removeItem(STORAGE_KEYS.apiKey)
+    }
+  }, [currentApiKey])
+
   function handleNewConversation() {
     const freshConversation = createConversation(activeConversation?.model)
 
@@ -199,8 +216,8 @@ function App() {
       return
     }
 
-    if (!genAI) {
-      setStatusMessage('The selected model is unavailable because the API key is missing.')
+    if (!currentApiKey) {
+      setStatusMessage('Add your Google AI API key below to start chatting.')
       return
     }
 
@@ -225,6 +242,7 @@ function App() {
     })
 
     try {
+      const genAI = new GoogleGenerativeAI(currentApiKey)
       const model = genAI.getGenerativeModel({
         model: selectedModel,
         systemInstruction: SYSTEM_PROMPT,
@@ -321,13 +339,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-void text-slate-100">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(8,15,24,0.92),rgba(4,7,11,1))]" />
-        <div className="absolute left-[-12rem] top-[-10rem] h-80 w-80 animate-float rounded-full bg-accent/10 blur-3xl" />
-        <div className="absolute bottom-[-8rem] right-[-8rem] h-72 w-72 animate-float rounded-full bg-sky-400/10 blur-3xl" />
-      </div>
-
+    <div className="min-h-screen bg-void text-zinc-100">
       <div className="relative flex min-h-screen">
         <button
           type="button"
@@ -341,23 +353,23 @@ function App() {
 
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-40 flex w-[21rem] max-w-[86vw] flex-col border-r border-white/10 bg-slate-950/90 px-5 py-5 shadow-panel backdrop-blur-xl transition-transform duration-300 lg:static lg:max-w-none lg:translate-x-0',
+            'fixed inset-y-0 left-0 z-40 flex w-[16rem] max-w-[86vw] flex-col border-r border-white/5 bg-ink px-3 py-3 transition-transform duration-300 lg:static lg:max-w-none lg:translate-x-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 px-2 py-1">
             <div>
-              <p className="font-heading text-lg font-semibold tracking-tight text-white">
+              <p className="font-heading text-base font-semibold tracking-tight text-white">
                 Lumen Chat
               </p>
-              <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
-                Google AI Workspace
+              <p className="text-[11px] text-zinc-500">
+                AI workspace
               </p>
             </div>
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="rounded-full border border-white/10 p-2 text-slate-300 transition hover:border-white/20 hover:text-white lg:hidden"
+              className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-white lg:hidden"
             >
               <CloseIcon />
             </button>
@@ -367,17 +379,17 @@ function App() {
             type="button"
             onClick={handleNewConversation}
             disabled={isStreaming}
-            className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm font-semibold text-accent transition hover:border-accent/50 hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#2a2a2a] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#313131] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlusIcon />
             New chat
           </button>
 
-          <div className="mt-6 flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
-              History
+          <div className="mt-5 flex items-center justify-between px-2">
+            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
+              Recent
             </p>
-            <p className="text-xs text-slate-500">{conversations.length} threads</p>
+            <p className="text-[11px] text-zinc-500">{conversations.length}</p>
           </div>
 
           <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
@@ -396,26 +408,26 @@ function App() {
                     setSidebarOpen(false)
                   }}
                   className={cn(
-                    'w-full rounded-3xl border px-4 py-4 text-left transition',
+                    'w-full rounded-xl px-3 py-3 text-left transition',
                     selected
-                      ? 'border-accent/30 bg-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
-                      : 'border-white/5 bg-white/[0.03] hover:border-white/10 hover:bg-white/[0.05]',
+                      ? 'bg-[#2a2a2a]'
+                      : 'hover:bg-[#242424]',
                   )}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-white">
+                  <div className="min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="truncate text-sm font-medium text-zinc-100">
                         {conversation.title}
                       </p>
-                      <p className="mt-2 line-clamp-2 text-sm text-slate-400">
-                        {getLastPreview(conversation.messages)}
-                      </p>
+                      <span className="rounded-md bg-[#343434] px-1.5 py-0.5 text-[10px] font-medium text-zinc-300">
+                        {modelLabel}
+                      </span>
                     </div>
-                    <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
-                      {modelLabel}
-                    </span>
+                    <p className="mt-1 line-clamp-1 text-xs text-zinc-500">
+                      {getLastPreview(conversation.messages)}
+                    </p>
                   </div>
-                  <div className="mt-4 flex items-center justify-between text-[11px] uppercase tracking-[0.24em] text-slate-500">
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-600">
                     <span>{formatSidebarTime(conversation.updatedAt)}</span>
                     <span>{conversation.messages.length} msgs</span>
                   </div>
@@ -424,102 +436,54 @@ function App() {
             })}
           </div>
 
-          <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
-              System prompt
+          <div className="mt-4 rounded-xl bg-[#202020] p-3">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-500">
+              System
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">{SYSTEM_PROMPT}</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">{SYSTEM_PROMPT}</p>
           </div>
         </aside>
 
         <main className="relative flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-10">
-              <div className="flex items-center justify-between gap-4">
+          <header className="sticky top-0 z-20 border-b border-white/5 bg-void/95 backdrop-blur">
+            <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(true)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-300 transition hover:bg-white/5 hover:text-white lg:hidden"
+                >
+                  <MenuIcon />
+                </button>
                 <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSidebarOpen(true)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-200 transition hover:border-white/20 hover:text-white lg:hidden"
-                  >
-                    <MenuIcon />
-                  </button>
                   <div>
-                    <p className="font-heading text-2xl font-semibold tracking-tight text-white">
-                      Premium AI chat
+                    <p className="font-heading text-base font-medium text-white">
+                      {activeConversation?.title || 'New chat'}
                     </p>
-                    <p className="text-sm text-slate-400">
-                      Streaming answers, markdown rendering, and local conversation memory.
+                    <p className="text-xs text-zinc-500">
+                      {MODELS.find((model) => model.value === activeConversation?.model)?.label}
                     </p>
                   </div>
                 </div>
-                <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-300 md:flex">
+              </div>
+              <div className="hidden items-center gap-2 rounded-full bg-[#2b2b2b] px-3 py-2 text-sm text-zinc-300 md:flex">
                   <span
                     className={cn(
-                      'h-2.5 w-2.5 rounded-full',
-                      API_KEY
+                      'h-2 w-2 rounded-full',
+                      currentApiKey
                         ? 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.85)]'
                         : 'bg-amber-300 shadow-[0_0_18px_rgba(253,224,71,0.75)]',
                     )}
                   />
-                  {API_KEY ? 'Ready for Google AI' : 'API key required'}
-                </div>
-              </div>
-
-              <div className="grid gap-3 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)]">
-                <label className="rounded-3xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                  <span className="text-xs uppercase tracking-[0.28em] text-slate-500">
-                    Model
-                  </span>
-                  <select
-                    value={activeConversation?.model ?? MODELS[0].value}
-                    disabled={isStreaming}
-                    onChange={(event) => handleModelChange(event.target.value)}
-                    className="mt-2 w-full bg-transparent text-base font-semibold text-white outline-none"
-                  >
-                    {MODELS.map((model) => (
-                      <option
-                        key={model.value}
-                        value={model.value}
-                        className="bg-slate-950 text-white"
-                      >
-                        {model.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <div className="rounded-3xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
-                    Context
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-white">
-                    {conversationTokenEstimate.toLocaleString()}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-400">Approx prompt tokens in this thread</p>
-                </div>
-
-                <div className="rounded-3xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
-                    Last response
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-white">
-                    {lastUsage ? lastUsage.total.toLocaleString() : '—'}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-400">
-                    {lastUsage
-                      ? `${lastUsage.prompt.toLocaleString()} prompt • ${lastUsage.output.toLocaleString()} output`
-                      : 'Token metrics appear after a completed response'}
-                  </p>
-                </div>
+                  {currentApiKey ? 'Ready for Google AI' : 'API key required'}
               </div>
             </div>
           </header>
 
           <section className="flex-1 overflow-y-auto">
-            <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-10">
+            <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-3 sm:px-6">
               {activeConversation?.messages.length ? (
-                <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4">
+                <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-1 py-4">
                   {activeConversation.messages.map((message) => (
                     <MessageBubble
                       key={message.id}
@@ -531,38 +495,31 @@ function App() {
                   <div ref={messagesEndRef} />
                 </div>
               ) : (
-                <div className="mx-auto flex w-full max-w-4xl flex-1 items-center">
-                  <div className="w-full overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-8 shadow-panel">
-                    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-                      <div>
-                        <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-xs uppercase tracking-[0.28em] text-accent">
-                          <span className="h-2 w-2 rounded-full bg-accent animate-pulse-soft" />
-                          Live streaming
-                        </div>
-                        <h1 className="mt-6 font-heading text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                          Ask bigger questions with a cleaner interface.
-                        </h1>
-                        <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-                          Start a new conversation with markdown output, persistent history,
-                          quick model switching, and token visibility built in.
-                        </p>
+                <div className="mx-auto flex w-full max-w-3xl flex-1 items-center py-12">
+                  <div className="w-full">
+                    <div className="text-center">
+                      <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2a2a2a] text-xl font-semibold text-white">
+                        AI
                       </div>
+                      <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                        How can I help?
+                      </h1>
+                      <p className="mt-3 text-sm text-zinc-400">
+                        Choose a model and start chatting.
+                      </p>
+                    </div>
 
-                      <div className="space-y-3">
-                        <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
-                          Prompt starters
-                        </p>
-                        {SUGGESTED_PROMPTS.map((prompt) => (
-                          <button
-                            key={prompt}
-                            type="button"
-                            onClick={() => handleSuggestion(prompt)}
-                            className="w-full rounded-3xl border border-white/10 bg-slate-950/70 px-4 py-4 text-left text-sm leading-6 text-slate-300 transition hover:border-accent/30 hover:bg-white/[0.05] hover:text-white"
-                          >
-                            {prompt}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="mt-10 grid gap-3 md:grid-cols-2">
+                      {SUGGESTED_PROMPTS.map((prompt) => (
+                        <button
+                          key={prompt}
+                          type="button"
+                          onClick={() => handleSuggestion(prompt)}
+                          className="rounded-2xl border border-white/10 bg-[#262626] px-4 py-4 text-left text-sm leading-6 text-zinc-300 transition hover:bg-[#2e2e2e] hover:text-white"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -570,10 +527,10 @@ function App() {
             </div>
           </section>
 
-          <footer className="border-t border-white/10 bg-slate-950/80 backdrop-blur-xl">
-            <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-10">
-              <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
-                <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] shadow-panel">
+          <footer className="sticky bottom-0 bg-gradient-to-t from-void via-void to-transparent pt-4">
+            <div className="mx-auto w-full max-w-5xl px-4 pb-4 sm:px-6">
+              <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
+                <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#2f2f2f] shadow-panel">
                   <textarea
                     ref={composerRef}
                     value={draft}
@@ -582,31 +539,46 @@ function App() {
                     onKeyDown={handleKeyDown}
                     placeholder="Send a message..."
                     rows={1}
-                    className="max-h-60 min-h-[104px] w-full resize-none bg-transparent px-5 py-5 text-base leading-7 text-white outline-none placeholder:text-slate-500"
+                    className="max-h-60 min-h-[84px] w-full resize-none bg-transparent px-5 py-4 text-[15px] leading-7 text-white outline-none placeholder:text-zinc-500"
                   />
 
-                  <div className="flex flex-col gap-4 border-t border-white/10 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="flex flex-col gap-3 border-t border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <label className="rounded-full bg-[#252525] px-3 py-1.5 text-xs text-zinc-300">
+                        <select
+                          value={activeConversation?.model ?? MODELS[0].value}
+                          disabled={isStreaming}
+                          onChange={(event) => handleModelChange(event.target.value)}
+                          className="bg-transparent outline-none"
+                        >
+                          {MODELS.map((model) => (
+                            <option
+                              key={model.value}
+                              value={model.value}
+                              className="bg-[#252525] text-white"
+                            >
+                              {model.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                       <StatPill label="Draft" value={draftTokenEstimate} />
                       <StatPill label="Context" value={conversationTokenEstimate} />
-                      <StatPill
-                        label="Model"
-                        value={activeConversation?.model ?? MODELS[0].value}
-                      />
+                      {lastUsage ? <StatPill label="Last" value={lastUsage.total} /> : null}
                     </div>
 
-                    <div className="flex flex-col items-start gap-3 sm:items-end">
+                    <div className="flex flex-col items-start gap-2 sm:items-end">
                       {statusMessage ? (
                         <p className="text-sm text-amber-200">{statusMessage}</p>
                       ) : (
-                        <p className="text-sm text-slate-400">
+                        <p className="text-xs text-zinc-500">
                           Press Enter to send, Shift + Enter for a new line.
                         </p>
                       )}
                       <button
                         type="submit"
-                        disabled={!draft.trim() || isStreaming || !API_KEY}
-                        className="inline-flex min-w-[8.5rem] items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300"
+                        disabled={!draft.trim() || isStreaming || !currentApiKey}
+                        className="inline-flex min-w-[8rem] items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-300"
                       >
                         {isStreaming ? (
                           <>
@@ -623,6 +595,37 @@ function App() {
                     </div>
                   </div>
                 </div>
+                <div className="mt-3 rounded-2xl border border-white/10 bg-[#262626] p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <input
+                      type="password"
+                      value={apiKeyInput}
+                      onChange={(event) => setApiKeyInput(event.target.value)}
+                      placeholder="Paste your Google AI API key"
+                      className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#1f1f1f] px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setStatusMessage('API key saved locally in this browser.')}
+                      className="rounded-xl bg-[#343434] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#3d3d3d]"
+                    >
+                      Save locally
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setApiKeyInput('')
+                        setStatusMessage('Stored API key cleared from this browser.')
+                      }}
+                      className="rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/5"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-3 text-center text-[11px] text-zinc-500">
+                  Responses are generated by Google AI models and may be inaccurate.
+                </p>
               </form>
             </div>
           </footer>
@@ -637,43 +640,31 @@ function MessageBubble({ copiedMessageId, message, onCopy }) {
   const usage = getUsageSummary(message.usageMetadata)
 
   return (
-    <article
-      className={cn(
-        'animate-fade-slide',
-        assistantMessage ? 'self-start' : 'self-end',
-      )}
-    >
+    <article className="animate-fade-slide">
       <div
         className={cn(
-          'flex items-start gap-3',
-          assistantMessage ? '' : 'flex-row-reverse',
+          'flex gap-4 rounded-3xl px-3 py-5 sm:px-4',
+          assistantMessage ? 'bg-transparent' : 'bg-[#2a2a2a]',
         )}
       >
         <div
           className={cn(
-            'mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-sm font-semibold uppercase tracking-[0.24em]',
+            'mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase',
             assistantMessage
-              ? 'border-accent/25 bg-accent/10 text-accent'
-              : 'border-white/10 bg-white/[0.06] text-white',
+              ? 'bg-accent text-white'
+              : 'bg-zinc-700 text-white',
           )}
         >
-          {assistantMessage ? 'AI' : 'You'}
+          {assistantMessage ? 'A' : 'Y'}
         </div>
 
-        <div
-          className={cn(
-            'group max-w-3xl rounded-[1.75rem] border px-5 py-4 shadow-panel',
-            assistantMessage
-              ? 'border-white/10 bg-slate-950/70'
-              : 'border-accent/20 bg-gradient-to-br from-slate-900/90 to-slate-950/90',
-          )}
-        >
-          <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="group min-w-0 flex-1">
+          <div className="mb-3 flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-white">
                 {assistantMessage ? 'Assistant' : 'You'}
               </p>
-              <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500">
+              <p className="mt-1 text-xs text-zinc-500">
                 {formatTime(message.createdAt)}
               </p>
             </div>
@@ -681,7 +672,7 @@ function MessageBubble({ copiedMessageId, message, onCopy }) {
             <button
               type="button"
               onClick={() => onCopy(message.id, message.content)}
-              className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:border-white/20 hover:text-white"
+              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-white/5 hover:text-white"
             >
               {copiedMessageId === message.id ? 'Copied' : 'Copy'}
             </button>
@@ -690,27 +681,27 @@ function MessageBubble({ copiedMessageId, message, onCopy }) {
           {assistantMessage ? (
             <MarkdownMessage content={message.content} />
           ) : (
-            <p className="whitespace-pre-wrap text-[15px] leading-7 text-slate-100">
+            <p className="whitespace-pre-wrap text-[15px] leading-7 text-zinc-100">
               {message.content}
             </p>
           )}
 
           {message.streaming ? (
-            <div className="mt-4 flex items-center gap-3 text-sm text-slate-400">
+            <div className="mt-4 flex items-center gap-3 text-sm text-zinc-400">
               <ThinkingDots />
               Streaming response
             </div>
           ) : null}
 
           {usage ? (
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-slate-500">
-              <span className="rounded-full border border-white/10 px-2.5 py-1">
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+              <span className="rounded-full bg-[#252525] px-2.5 py-1">
                 Prompt {usage.prompt.toLocaleString()}
               </span>
-              <span className="rounded-full border border-white/10 px-2.5 py-1">
+              <span className="rounded-full bg-[#252525] px-2.5 py-1">
                 Output {usage.output.toLocaleString()}
               </span>
-              <span className="rounded-full border border-white/10 px-2.5 py-1">
+              <span className="rounded-full bg-[#252525] px-2.5 py-1">
                 Total {usage.total.toLocaleString()}
               </span>
             </div>
@@ -736,15 +727,14 @@ function MarkdownMessage({ content }) {
               {...props}
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-accent underline decoration-accent/40 underline-offset-4"
+              className="font-medium text-[#7dd3fc] underline decoration-[#7dd3fc]/40 underline-offset-4"
             />
           ),
           code: ({ children, className, inline, ...props }) => {
-
             return inline ? (
               <code
                 {...props}
-                className="rounded-lg border border-white/10 bg-white/[0.06] px-1.5 py-0.5 text-[0.92em] text-cyan-100"
+                className="rounded-md bg-[#2b2b2b] px-1.5 py-0.5 text-[0.92em] text-zinc-100"
               >
                 {children}
               </code>
@@ -755,7 +745,7 @@ function MarkdownMessage({ content }) {
             )
           },
           pre: ({ children }) => (
-            <pre className="overflow-x-auto rounded-2xl border border-white/10 bg-[#07111a] p-4 text-sm text-slate-100">
+            <pre className="overflow-x-auto rounded-2xl border border-white/5 bg-[#1a1a1a] p-4 text-sm text-zinc-100">
               {children}
             </pre>
           ),
@@ -769,8 +759,8 @@ function MarkdownMessage({ content }) {
 
 function StatPill({ label, value }) {
   return (
-    <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs uppercase tracking-[0.2em] text-slate-300">
-      <span className="text-slate-500">{label}</span> {value}
+    <div className="rounded-full bg-[#252525] px-3 py-1.5 text-xs text-zinc-300">
+      <span className="text-zinc-500">{label}</span> {value}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 # Lumen Chat
 
-A polished Gemini web chat built with React, Vite, Tailwind CSS, and the legacy `@google/generative-ai` SDK.
+A polished Google AI web chat built with React, Vite, Tailwind CSS, and the legacy `@google/generative-ai` SDK.
 
 ## Features
 
@@ -19,11 +19,13 @@ npm install
 npm run dev
 ```
 
-Create a `.env` file with:
+For local development you can create a `.env` file with:
 
 ```bash
 VITE_GEMINI_API_KEY=your-gemini-api-key
 ```
+
+The deployed app stores a user-provided API key only in browser `localStorage`, so no secret needs to be committed or published.
 
 ## Deploy
 

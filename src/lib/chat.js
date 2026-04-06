@@ -22,6 +22,7 @@ export const SUGGESTED_PROMPTS = [
 export const STORAGE_KEYS = {
   conversations: 'llm-chat:conversations',
   selectedConversation: 'llm-chat:selected-conversation',
+  apiKey: 'llm-chat:google-api-key',
 }
 
 function uid(prefix) {

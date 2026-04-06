@@ -4,15 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        void: '#04070b',
-        ink: '#0a1018',
-        panel: '#101823',
-        accent: '#5eead4',
-        accentSoft: '#11353a',
+        void: '#212121',
+        ink: '#171717',
+        panel: '#2f2f2f',
+        accent: '#10a37f',
+        accentSoft: '#12372f',
+        chatline: '#303030',
       },
       fontFamily: {
-        sans: ['"Manrope"', 'system-ui', 'sans-serif'],
-        heading: ['"Sora"', 'system-ui', 'sans-serif'],
+        sans: ['"Inter"', 'system-ui', 'sans-serif'],
+        heading: ['"Inter"', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         'fade-slide': {
