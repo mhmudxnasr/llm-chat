@@ -4,24 +4,27 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
-  --bg-void: #09090b;
-  --bg-ink: #111113;
-  --bg-panel: rgba(24, 24, 27, 0.7);
-  --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.5);
-  --border: rgba(255, 255, 255, 0.08);
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  background: var(--bg-void);
-  color: var(--text-primary);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  :root {
+    color-scheme: dark;
+    --bg-void: #09090b;
+    --bg-ink: #111113;
+    --bg-panel: rgba(24, 24, 27, 0.75);
+    --accent: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.4);
+    --border: rgba(255, 255, 255, 0.1);
+    --border-bright: rgba(255, 255, 255, 0.15);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 html, body, #root {
@@ -44,9 +47,9 @@ body {
 }
 
 .glass-dark {
-  background: rgba(9, 9, 11, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(9, 9, 11, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
 }
 
@@ -81,13 +84,43 @@ body {
   }
 }
 
-@keyframes pulse-glow {
+@keyframes pulse {
   0%, 100% {
-    box-shadow: 0 0 15px var(--accent-glow);
+    opacity: 1;
+    transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 25px var(--accent-glow);
+    opacity: 0.4;
+    transform: scale(0.9);
   }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    opacity: 0.5;
+    filter: blur(8px);
+  }
+  50% {
+    opacity: 0.8;
+    filter: blur(12px);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .animate-in {
@@ -163,5 +196,6 @@ textarea::-webkit-scrollbar {
 .text-gradient {
   background: linear-gradient(to bottom right, #fff 0%, #a1a1aa 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
