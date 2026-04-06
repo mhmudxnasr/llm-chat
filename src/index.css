@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  font-family: 'Manrope', system-ui, sans-serif;
+  background: #04070b;
+  color: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(16, 24, 35, 0.96), rgba(4, 7, 11, 1) 56%),
+    #04070b;
+}
+
+button,
+select,
+textarea {
+  font: inherit;
+}
+
+textarea::-webkit-scrollbar,
+div::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+textarea::-webkit-scrollbar-track,
+div::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb,
+div::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+  background-clip: padding-box;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.markdown-body {
+  color: #dbe4f0;
+  font-size: 0.98rem;
+  line-height: 1.85;
+}
+
+.markdown-body > *:first-child {
+  margin-top: 0;
+}
+
+.markdown-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body blockquote,
+.markdown-body pre,
+.markdown-body table {
+  margin: 0 0 1rem;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.3rem;
+}
+
+.markdown-body li + li {
+  margin-top: 0.35rem;
+}
+
+.markdown-body strong {
+  color: #ffffff;
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid rgba(94, 234, 212, 0.45);
+  padding-left: 1rem;
+  color: #b9c6d8;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.markdown-body th,
+.markdown-body td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+}
+
+.markdown-body thead {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.markdown-body hr {
+  margin: 1.4rem 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
