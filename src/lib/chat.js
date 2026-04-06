@@ -2,19 +2,14 @@ export const SYSTEM_PROMPT = 'You are a helpful, intelligent AI assistant.'
 
 export const MODELS = [
   {
-    value: 'gemini-1.5-flash',
-    label: 'Gemini 1.5 Flash',
-    shortLabel: '1.5 Flash',
+    value: 'gemma-3-27b-it',
+    label: 'Gemma 3 27B IT',
+    shortLabel: '27B IT',
   },
   {
-    value: 'gemini-1.5-pro',
-    label: 'Gemini 1.5 Pro',
-    shortLabel: '1.5 Pro',
-  },
-  {
-    value: 'gemini-2.0-flash',
-    label: 'Gemini 2.0 Flash',
-    shortLabel: '2.0 Flash',
+    value: 'gemini-2.5-flash-lite',
+    label: 'Gemini 2.5 Flash-Lite',
+    shortLabel: '2.5 Lite',
   },
 ]
 
@@ -172,10 +167,17 @@ export function loadStoredConversations() {
           typeof conversation.title === 'string' && conversation.title.trim()
             ? conversation.title
             : 'New conversation',
-        model:
-          typeof conversation.model === 'string'
-            ? conversation.model
-            : MODELS[0].value,
+        model: MODELS.some(
+          (model) =>
+            model.value ===
+            (typeof conversation.model === 'string'
+              ? conversation.model
+              : MODELS[0].value),
+        )
+          ? (typeof conversation.model === 'string'
+              ? conversation.model
+              : MODELS[0].value)
+          : MODELS[0].value,
         updatedAt:
           typeof conversation.updatedAt === 'number'
             ? conversation.updatedAt

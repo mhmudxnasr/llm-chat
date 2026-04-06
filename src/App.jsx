@@ -200,7 +200,7 @@ function App() {
     }
 
     if (!genAI) {
-      setStatusMessage('Gemini is unavailable because the API key is missing.')
+      setStatusMessage('The selected model is unavailable because the API key is missing.')
       return
     }
 
@@ -284,7 +284,7 @@ function App() {
       const friendlyMessage =
         error instanceof Error
           ? error.message
-          : 'Gemini returned an unexpected error. Please retry.'
+          : 'The selected model returned an unexpected error. Please retry.'
 
       startTransition(() => {
         replaceConversation(conversationId, (conversation) => ({
@@ -293,7 +293,7 @@ function App() {
             message.id === assistantMessage.id
               ? {
                   ...message,
-                  content: `I ran into an error while contacting Gemini.\n\n${friendlyMessage}`,
+                  content: `I ran into an error while contacting the selected model.\n\n${friendlyMessage}`,
                   streaming: false,
                   isError: true,
                 }
@@ -351,7 +351,7 @@ function App() {
                 Lumen Chat
               </p>
               <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
-                Gemini Workspace
+                Google AI Workspace
               </p>
             </div>
             <button
@@ -446,7 +446,7 @@ function App() {
                   </button>
                   <div>
                     <p className="font-heading text-2xl font-semibold tracking-tight text-white">
-                      Premium Gemini chat
+                      Premium AI chat
                     </p>
                     <p className="text-sm text-slate-400">
                       Streaming answers, markdown rendering, and local conversation memory.
@@ -462,7 +462,7 @@ function App() {
                         : 'bg-amber-300 shadow-[0_0_18px_rgba(253,224,71,0.75)]',
                     )}
                   />
-                  {API_KEY ? 'Ready for Gemini' : 'API key required'}
+                  {API_KEY ? 'Ready for Google AI' : 'API key required'}
                 </div>
               </div>
 
@@ -543,7 +543,7 @@ function App() {
                           Ask bigger questions with a cleaner interface.
                         </h1>
                         <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-                          Start a new Gemini conversation with markdown output, persistent history,
+                          Start a new conversation with markdown output, persistent history,
                           quick model switching, and token visibility built in.
                         </p>
                       </div>
@@ -580,7 +580,7 @@ function App() {
                     disabled={isStreaming}
                     onChange={(event) => setDraft(event.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Send a message to Gemini..."
+                    placeholder="Send a message..."
                     rows={1}
                     className="max-h-60 min-h-[104px] w-full resize-none bg-transparent px-5 py-5 text-base leading-7 text-white outline-none placeholder:text-slate-500"
                   />
@@ -671,7 +671,7 @@ function MessageBubble({ copiedMessageId, message, onCopy }) {
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-white">
-                {assistantMessage ? 'Gemini' : 'You'}
+                {assistantMessage ? 'Assistant' : 'You'}
               </p>
               <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500">
                 {formatTime(message.createdAt)}
