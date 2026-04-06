@@ -14,7 +14,7 @@ import {
   STORAGE_KEYS,
   SUGGESTED_PROMPTS,
   SYSTEM_PROMPT,
-  buildContents,
+  buildRequestContents,
   createConversation,
   createMessage,
   deriveConversationTitle,
@@ -25,6 +25,7 @@ import {
   getLastPreview,
   getUsageSummary,
   loadStoredConversations,
+  supportsSystemInstruction,
 } from './lib/chat'
 
 const ENV_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() ?? ''
@@ -245,7 +246,9 @@ function App() {
       const genAI = new GoogleGenerativeAI(currentApiKey)
       const model = genAI.getGenerativeModel({
         model: selectedModel,
-        systemInstruction: SYSTEM_PROMPT,
+        ...(supportsSystemInstruction(selectedModel)
+          ? { systemInstruction: SYSTEM_PROMPT }
+          : {}),
         generationConfig: {
           temperature: 0.8,
           topP: 0.92,
@@ -254,7 +257,11 @@ function App() {
       })
 
       const streamResult = await model.generateContentStream({
-        contents: buildContents([...activeConversation.messages, userMessage]),
+        contents: buildRequestContents(
+          [...activeConversation.messages, userMessage],
+          selectedModel,
+          SYSTEM_PROMPT,
+        ),
       })
 
       let streamedText = ''

@@ -100,6 +100,48 @@ export function buildContents(messages = []) {
     }))
 }
 
+export function supportsSystemInstruction(model) {
+  return model.startsWith('gemini-')
+}
+
+export function buildRequestContents(messages = [], model, systemPrompt) {
+  const contents = buildContents(messages)
+
+  if (!contents.length) {
+    return contents
+  }
+
+  if (supportsSystemInstruction(model) || !systemPrompt?.trim()) {
+    return contents
+  }
+
+  const [firstMessage, ...rest] = contents
+
+  if (firstMessage.role === 'user') {
+    return [
+      {
+        ...firstMessage,
+        parts: [
+          {
+            text: `System instruction: ${systemPrompt}\n\n${firstMessage.parts
+              .map((part) => part.text ?? '')
+              .join('\n')}`,
+          },
+        ],
+      },
+      ...rest,
+    ]
+  }
+
+  return [
+    {
+      role: 'user',
+      parts: [{ text: `System instruction: ${systemPrompt}` }],
+    },
+    ...contents,
+  ]
+}
+
 export function formatSidebarTime(value) {
   const date = new Date(value)
   const now = new Date()
